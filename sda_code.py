@@ -51,15 +51,15 @@ def generator_code(steam_id, user_name):
             js = fn.read()
             dic = json.loads(js)
             shared_secret = dic.get('shared_secret')
-    if shared_secret is None and os.path.exists(user_name_path):
+    elif os.path.exists(user_name_path):
         with open(user_name_path) as fn:
             js = fn.read()
             dic = json.loads(js)
             shared_secret = dic.get('shared_secret')
-
-    aligned_time = int(time() + get_time_offset())  # 补偿后的时间
-    two_factor_code = generate_twofactor_code_for_time(shared_secret, aligned_time)
-    if len(two_factor_code) == 5:
-        return True, two_factor_code
-    else:
-        return False
+    if shared_secret:
+        aligned_time = int(time() + get_time_offset())  # 补偿后的时间
+        two_factor_code = generate_twofactor_code_for_time(shared_secret, aligned_time)
+        if len(two_factor_code) == 5:
+            return True, two_factor_code
+        else:
+            return False
