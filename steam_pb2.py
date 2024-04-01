@@ -14,29 +14,29 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bsteam.proto\x12\x06Protoc\"E\n-IAuthenticationGetPasswordRsaPublicKeyRequest\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\t\"q\n.IAuthenticationGetPasswordRsaPublicKeyResponse\x12\x15\n\rpublickey_mod\x18\x01 \x01(\t\x12\x15\n\rpublickey_exp\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x04\"\xe9\x01\n\x0cLoginRequest\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x02 \x01(\t\x12\x1a\n\x12\x65ncrypted_password\x18\x03 \x01(\t\x12\x1c\n\x14\x65ncryption_timestamp\x18\x04 \x01(\x03\x12\x1a\n\x12set_remember_login\x18\x05 \x01(\x05\x12\x17\n\x0fset_persistence\x18\x07 \x01(\x08\x12\x12\n\nwebsite_id\x18\x08 \x01(\t\x12.\n\x0e\x64\x65vice_details\x18\t \x03(\x0b\x32\x16.Protoc.device_details\x12\x10\n\x08language\x18\x0b \x01(\x05\"\x9c\x01\n\x0e\x64\x65vice_details\x12\x1c\n\x14\x64\x65vice_friendly_name\x18\x01 \x01(\t\x12\x15\n\rplatform_type\x18\x02 \x01(\x05\x12\x0f\n\x07os_type\x18\x03 \x01(\x05\x12\x1a\n\x12gaming_device_type\x18\x04 \x01(\r\x12\x14\n\x0c\x63lient_count\x18\x05 \x01(\r\x12\x12\n\nmachine_id\x18\x06 \x01(\x0c\"\xea\x01\n\rLoginRespones\x12\x11\n\tclient_id\x18\x01 \x01(\x04\x12\x12\n\nrequest_id\x18\x02 \x01(\x0c\x12\x10\n\x08interval\x18\x03 \x01(\x07\x12<\n\x15\x61llowed_confirmations\x18\x04 \x03(\x0b\x32\x1d.Protoc.allowed_confirmations\x12\x0f\n\x07steamid\x18\x05 \x01(\x04\x12\x12\n\nweak_token\x18\x06 \x01(\t\x12\x1d\n\x15\x61greement_session_url\x18\x07 \x01(\t\x12\x1e\n\x16\x65xtended_error_message\x18\x08 \x01(\t\"N\n\x15\x61llowed_confirmations\x12\x19\n\x11\x63onfirmation_type\x18\x01 \x01(\x05\x12\x1a\n\x12\x61ssociated_message\x18\x02 \x01(\t\"E\n\x1dPollAuthSessionStatus_Request\x12\x10\n\x08\x43lientID\x18\x01 \x01(\x04\x12\x12\n\nrequest_id\x18\x02 \x01(\x0c\"\xe7\x01\n\x1ePollAuthSessionStatus_Response\x12\x10\n\x08\x43lientID\x18\x01 \x01(\x04\x12\x19\n\x11new_challenge_url\x18\x02 \x01(\t\x12\x15\n\rrefresh_token\x18\x03 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x04 \x01(\t\x12\x1e\n\x16had_remote_interaction\x18\x05 \x01(\x08\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x06 \x01(\t\x12\x16\n\x0enew_guard_data\x18\x07 \x01(\t\x12\x1d\n\x15\x61greement_session_url\x18\x08 \x01(\t\"j\n#UpdateAuthSessionWithSteamGuardCode\x12\x11\n\tclient_id\x18\x01 \x01(\x04\x12\x0f\n\x07steamId\x18\x02 \x01(\x06\x12\x0c\n\x04\x63ode\x18\x03 \x01(\t\x12\x11\n\tcode_type\x18\x04 \x01(\x03\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0bsteam.proto\x12\x06Protoc\"E\n-CAuthenticationGetPasswordRsaPublicKeyRequest\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x01 \x01(\t\"q\n.CAuthenticationGetPasswordRsaPublicKeyResponse\x12\x15\n\rpublickey_mod\x18\x01 \x01(\t\x12\x15\n\rpublickey_exp\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x04\"\xe5\x01\n\x08\x65Msg9804\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x02 \x01(\t\x12\x1a\n\x12\x65ncrypted_password\x18\x03 \x01(\t\x12\x1c\n\x14\x65ncryption_timestamp\x18\x04 \x01(\x03\x12\x1a\n\x12set_remember_login\x18\x05 \x01(\x05\x12\x17\n\x0fset_persistence\x18\x07 \x01(\x08\x12\x12\n\nwebsite_id\x18\x08 \x01(\t\x12.\n\x0e\x64\x65vice_details\x18\t \x03(\x0b\x32\x16.Protoc.device_details\x12\x10\n\x08language\x18\x0b \x01(\x05\"\x9c\x01\n\x0e\x64\x65vice_details\x12\x1c\n\x14\x64\x65vice_friendly_name\x18\x01 \x01(\t\x12\x15\n\rplatform_type\x18\x02 \x01(\x05\x12\x0f\n\x07os_type\x18\x03 \x01(\x05\x12\x1a\n\x12gaming_device_type\x18\x04 \x01(\r\x12\x14\n\x0c\x63lient_count\x18\x05 \x01(\r\x12\x12\n\nmachine_id\x18\x06 \x01(\x0c\"\xed\x01\n\x10Response_EMsg147\x12\x11\n\tclient_id\x18\x01 \x01(\x04\x12\x12\n\nrequest_id\x18\x02 \x01(\x0c\x12\x10\n\x08interval\x18\x03 \x01(\x07\x12<\n\x15\x61llowed_confirmations\x18\x04 \x03(\x0b\x32\x1d.Protoc.allowed_confirmations\x12\x0f\n\x07steamid\x18\x05 \x01(\x04\x12\x12\n\nweak_token\x18\x06 \x01(\t\x12\x1d\n\x15\x61greement_session_url\x18\x07 \x01(\t\x12\x1e\n\x16\x65xtended_error_message\x18\x08 \x01(\t\"N\n\x15\x61llowed_confirmations\x12\x19\n\x11\x63onfirmation_type\x18\x01 \x01(\x05\x12\x1a\n\x12\x61ssociated_message\x18\x02 \x01(\t\"E\n\x1dPollAuthSessionStatus_Request\x12\x10\n\x08\x43lientID\x18\x01 \x01(\x04\x12\x12\n\nrequest_id\x18\x02 \x01(\x0c\"\xe7\x01\n\x1ePollAuthSessionStatus_Response\x12\x10\n\x08\x43lientID\x18\x01 \x01(\x04\x12\x19\n\x11new_challenge_url\x18\x02 \x01(\t\x12\x15\n\rrefresh_token\x18\x03 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x04 \x01(\t\x12\x1e\n\x16had_remote_interaction\x18\x05 \x01(\x08\x12\x14\n\x0c\x61\x63\x63ount_name\x18\x06 \x01(\t\x12\x16\n\x0enew_guard_data\x18\x07 \x01(\t\x12\x1d\n\x15\x61greement_session_url\x18\x08 \x01(\t\"j\n#UpdateAuthSessionWithSteamGuardCode\x12\x11\n\tclient_id\x18\x01 \x01(\x04\x12\x0f\n\x07steamId\x18\x02 \x01(\x06\x12\x0c\n\x04\x63ode\x18\x03 \x01(\t\x12\x11\n\tcode_type\x18\x04 \x01(\x03\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'steam_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
-  _globals['_IAUTHENTICATIONGETPASSWORDRSAPUBLICKEYREQUEST']._serialized_start=23
-  _globals['_IAUTHENTICATIONGETPASSWORDRSAPUBLICKEYREQUEST']._serialized_end=92
-  _globals['_IAUTHENTICATIONGETPASSWORDRSAPUBLICKEYRESPONSE']._serialized_start=94
-  _globals['_IAUTHENTICATIONGETPASSWORDRSAPUBLICKEYRESPONSE']._serialized_end=207
-  _globals['_LOGINREQUEST']._serialized_start=210
-  _globals['_LOGINREQUEST']._serialized_end=443
-  _globals['_DEVICE_DETAILS']._serialized_start=446
-  _globals['_DEVICE_DETAILS']._serialized_end=602
-  _globals['_LOGINRESPONES']._serialized_start=605
-  _globals['_LOGINRESPONES']._serialized_end=839
-  _globals['_ALLOWED_CONFIRMATIONS']._serialized_start=841
-  _globals['_ALLOWED_CONFIRMATIONS']._serialized_end=919
-  _globals['_POLLAUTHSESSIONSTATUS_REQUEST']._serialized_start=921
-  _globals['_POLLAUTHSESSIONSTATUS_REQUEST']._serialized_end=990
-  _globals['_POLLAUTHSESSIONSTATUS_RESPONSE']._serialized_start=993
-  _globals['_POLLAUTHSESSIONSTATUS_RESPONSE']._serialized_end=1224
-  _globals['_UPDATEAUTHSESSIONWITHSTEAMGUARDCODE']._serialized_start=1226
-  _globals['_UPDATEAUTHSESSIONWITHSTEAMGUARDCODE']._serialized_end=1332
+  _globals['_CAUTHENTICATIONGETPASSWORDRSAPUBLICKEYREQUEST']._serialized_start=23
+  _globals['_CAUTHENTICATIONGETPASSWORDRSAPUBLICKEYREQUEST']._serialized_end=92
+  _globals['_CAUTHENTICATIONGETPASSWORDRSAPUBLICKEYRESPONSE']._serialized_start=94
+  _globals['_CAUTHENTICATIONGETPASSWORDRSAPUBLICKEYRESPONSE']._serialized_end=207
+  _globals['_EMSG9804']._serialized_start=210
+  _globals['_EMSG9804']._serialized_end=439
+  _globals['_DEVICE_DETAILS']._serialized_start=442
+  _globals['_DEVICE_DETAILS']._serialized_end=598
+  _globals['_RESPONSE_EMSG147']._serialized_start=601
+  _globals['_RESPONSE_EMSG147']._serialized_end=838
+  _globals['_ALLOWED_CONFIRMATIONS']._serialized_start=840
+  _globals['_ALLOWED_CONFIRMATIONS']._serialized_end=918
+  _globals['_POLLAUTHSESSIONSTATUS_REQUEST']._serialized_start=920
+  _globals['_POLLAUTHSESSIONSTATUS_REQUEST']._serialized_end=989
+  _globals['_POLLAUTHSESSIONSTATUS_RESPONSE']._serialized_start=992
+  _globals['_POLLAUTHSESSIONSTATUS_RESPONSE']._serialized_end=1223
+  _globals['_UPDATEAUTHSESSIONWITHSTEAMGUARDCODE']._serialized_start=1225
+  _globals['_UPDATEAUTHSESSIONWITHSTEAMGUARDCODE']._serialized_end=1331
 # @@protoc_insertion_point(module_scope)

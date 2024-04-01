@@ -15,7 +15,7 @@ from steam_pb2 import (
     allowed_confirmations,
     PollAuthSessionStatus_Request,
     PollAuthSessionStatus_Response,
-
+    UpdateAuthSessionWithSteamGuardCode
 )
 import urllib3
 
