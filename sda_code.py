@@ -1,3 +1,4 @@
+import os.path
 import sys
 
 from time import time
@@ -42,14 +43,16 @@ def generate_twofactor_code_for_time(shared_secret, aligned_time):
 
 # 模拟生成验证码
 def generator_code(steam_id, user_name):
+    steam_id_path = fr'.\maFiles\{steam_id}.maFile'
+    user_name_path = fr'.\maFiles\{user_name}.maFile'
     # 从文件中读入shared_secrets
-    if steam_id:
-        with open(fr'.\maFiles\{steam_id}.maFile') as fn:
+    if steam_id and os.path.exists(steam_id_path):
+        with open(steam_id_path) as fn:
             js = fn.read()
             dic = json.loads(js)
             shared_secret = dic.get('shared_secret')
-    if shared_secret is None:
-        with open(fr'.\maFiles\{user_name}.maFile') as fn:
+    if shared_secret is None and os.path.exists(user_name_path):
+        with open(user_name_path) as fn:
             js = fn.read()
             dic = json.loads(js)
             shared_secret = dic.get('shared_secret')
