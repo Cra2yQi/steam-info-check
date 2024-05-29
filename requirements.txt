@@ -1,0 +1,7 @@
+requests~=2.31.0
+rsa~=4.9
+urllib3~=1.26.18
+PyQt5~=5.15.10
+openpyxl~=3.1.2
+beautifulsoup4~=4.12.3
+pycryptodomex~=3.20.0
