@@ -12,11 +12,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, \
     QWidget, QMenu, QMessageBox
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, Qt
-from openpyxl import Workbook
+from openpyxl.workbook import Workbook
+
 from steam import SteamAuth
 from sda_code import generator_code
-from steam_tools import regex_recently_dropped
+from steam_tools import regex_recently_dropped, regex_vac, regex_contest, regex_profile, regex_user_info
 from win_gui import Ui_task_MainWindow
+from email_tools import get_login_code
 
 
 class Worker(QThread, QObject):
@@ -24,21 +26,46 @@ class Worker(QThread, QObject):
     update_table_item_request = pyqtSignal(int, int, str)
     get_table_item = pyqtSignal(int, int)
 
-    def __init__(self, account, password, email, email_pwd, row_index, parent=None):
+    def __init__(self, account, password, email, email_pwd, row_index, date=None, parent=None, check_rank=False,
+                 check_vac=False, check_contest=False, check_prime=False, close_guard=False, check_user_info=False):
         QThread.__init__(self, parent)
         QObject.__init__(self, parent)
+        self.date = date
         self.account = account
         self.password = password
         self.email = email
         self.email_pwd = email_pwd
         self.row_index = row_index
+        self.check_rank = check_rank  # 是否查询等级
+        self.check_vac = check_vac  # 是否查询封禁
+        self.check_contest = check_contest  # 是否查询胜场
+        self.check_prime = check_prime  # 查询优先状态
+        self.close_guard = close_guard
+        self.check_user_info = check_user_info
         self.acc = None
+        self.pop_server = None
 
     def run(self):
         try:
+            self.update_table_item_request.emit(self.row_index, 5, f"开始任务")
             login_state = self.login_task(self.account, self.password, self.email, self.email_pwd, self.row_index)
             if login_state:
                 self.inventory_task()
+                if self.check_rank:
+                    self.rank_task()
+                if self.check_vac:
+                    self.vac_task()
+                if self.check_contest:
+                    self.contest_task()
+                if self.close_guard:
+                    login_msg = self.get_table_item.emit(self.row_index, 5)
+                    if login_msg != '无令牌登录成功':
+                        if self.acc.close_guard(pop_server=self.pop_server):
+                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌成功")
+                        else:
+                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌失败")
+                if self.check_user_info:
+                    self.check_user_info_task()
         except Exception as e:
             print(f'Exception in run: {e}')
         finally:
@@ -52,14 +79,21 @@ class Worker(QThread, QObject):
             send_state, send_re = self.acc.send_encode_request(encode_password, rsa_re.timestamp)
             if send_state:
                 if len(send_re.allowed_confirmations) > 0:
-                    if send_re.allowed_confirmations[0].confirmation_type == 2:
+                    if send_re.allowed_confirmations[0].confirmation_type == 1:
+                        token_state = self.acc.get_token()
+                        if token_state:
+                            self.update_table_item_request.emit(row_index, 5, '无令牌登录成功')
+                            return True
+                        else:
+                            self.update_table_item_request.emit(row_index, 5, '登陆失败')
+                            return False
+                    elif send_re.allowed_confirmations[0].confirmation_type == 2:
                         self.update_table_item_request.emit(row_index, 5, '尝试获取邮箱令牌')
-                        pass
-                    if send_re.allowed_confirmations[0].confirmation_type == 3:
-                        self.update_table_item_request.emit(row_index, 5, '尝试获取手机令牌')
-                        gen_state, code = generator_code(self.acc.steam_id, self.acc.username)
-                        if gen_state:
-                            state = self.acc.auth_code(code)
+                        self.acc.send_code()
+                        self.pop_server = f'mail.{send_re.allowed_confirmations[0].associated_message}'
+                        code = get_login_code(self.email, self.email_pwd, self.pop_server)
+                        if code:
+                            state = self.acc.auth_code(code, code_type=2)
                             if state:
                                 token_state = self.acc.get_token()
                                 if token_state:
@@ -69,10 +103,26 @@ class Worker(QThread, QObject):
                                     self.update_table_item_request.emit(row_index, 5, '登陆失败')
                                     return False
                         else:
-                            self.update_table_item_request.emit(row_index, 5, '获取验证码错误')
+                            self.update_table_item_request.emit(row_index, 5, '没有邮箱令牌')
+                            return False
+                    elif send_re.allowed_confirmations[0].confirmation_type == 3:
+                        self.update_table_item_request.emit(row_index, 5, '尝试获取手机令牌')
+                        gen_state, code = generator_code(self.acc.steam_id, self.acc.username)
+                        if gen_state:
+                            state = self.acc.auth_code(code, code_type=3)
+                            if state:
+                                token_state = self.acc.get_token()
+                                if token_state:
+                                    self.update_table_item_request.emit(row_index, 5, '登录成功')
+                                    return True
+                                else:
+                                    self.update_table_item_request.emit(row_index, 5, '登陆失败')
+                                    return False
+                        else:
+                            self.update_table_item_request.emit(row_index, 5, '没有找到mf文件')
                             return False
             else:
-                self.update_table_item_request.emit(row_index, 5, '登陆失败')
+                self.update_table_item_request.emit(row_index, 5, f'{send_re["msg"]}')
                 return False
         else:
             self.update_table_item_request.emit(row_index, 5, '获取密钥失败')
@@ -81,25 +131,67 @@ class Worker(QThread, QObject):
     def inventory_task(self):
         inventory_state, inventory_re = self.acc.get_history_inventory()
         if inventory_state:
-            inventory_list = regex_recently_dropped(inventory_re)
+            inventory_list = regex_recently_dropped(inventory_re, date_str=self.date)
             if inventory_list:
-                if inventory_list[0]['date'] == inventory_list[1]['date']:
-                    self.update_table_item_request.emit(self.row_index, 6,
-                                                        f"{inventory_list[1]['item_name']}, {inventory_list[0]['item_name']}")
-                    self.update_table_item_request.emit(self.row_index, 7,
-                                                        "2")
-                    self.update_table_item_request.emit(self.row_index, 8,
-                                                        f"{inventory_list[0]['date']}")
-                else:
-                    self.update_table_item_request.emit(self.row_index, 6,
-                                                        f"{inventory_list[0]['item_name']}")
-                    self.update_table_item_request.emit(self.row_index, 7,
-                                                        "1")
-                    self.update_table_item_request.emit(self.row_index, 8,
-                                                        f"{inventory_list[0]['date']}")
+                item_name = ''
+                for item in inventory_list:
+                    item_name = item['item_name'] + ' ' + item_name
+                self.update_table_item_request.emit(self.row_index, 6,
+                                                    f"{item_name}")
+                self.update_table_item_request.emit(self.row_index, 7,
+                                                    f"{len(inventory_list)}")
+                self.update_table_item_request.emit(self.row_index, 8,
+                                                    f"{inventory_list[0]['date']}")
             else:
                 self.update_table_item_request.emit(self.row_index, 7,
                                                     "0")
+
+    def rank_task(self):
+        rank_status, content = self.acc.get_rank()
+        if rank_status:
+            re = regex_profile(content)
+            self.update_table_item_request.emit(self.row_index, 10,
+                                                f"{re['rank']}")
+            self.update_table_item_request.emit(self.row_index, 11,
+                                                f"{re['experience']}")
+            if re['login_time']:
+                self.update_table_item_request.emit(self.row_index, 15,
+                                                    f"{re['login_time']}")
+
+    def vac_task(self):
+        vac_status, content = self.acc.get_vac()
+        if vac_status:
+            re = regex_vac(content)
+            if re:
+                self.update_table_item_request.emit(self.row_index, 12,
+                                                    f"封禁")
+            else:
+                self.update_table_item_request.emit(self.row_index, 12,
+                                                    f"正常")
+
+    def contest_task(self):
+        contest_status, content = self.acc.get_contest()
+        if contest_status:
+            re = regex_contest(content)
+            self.update_table_item_request.emit(self.row_index, 13,
+                                                re)
+
+    def check_user_info_task(self):
+        check_status, content = self.acc.get_user_info()
+        if check_status:
+            re = regex_user_info(content)
+            if re['country']:
+                self.update_table_item_request.emit(self.row_index, 16,
+                                                    re['country'])
+            if re['balance']:
+                self.update_table_item_request.emit(self.row_index, 17,
+                                                    re['balance'])
+            if re['steam64id']:
+                self.update_table_item_request.emit(self.row_index, 18,
+                                                    re['steam64id'])
+            if re['steam17id']:
+                self.update_table_item_request.emit(self.row_index, 19,
+                                                    str(re['steam17id']))
 
 
 class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
@@ -111,6 +203,13 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         self.threadList = []  # 用于存储所有线程的列表
         self.workerList = []
         self.isRunning = False  # 追踪任务是否正在运行
+        self.selected_date = None  # 查询掉落的日期
+        self.check_rank = False  # 是否查询等级
+        self.check_vac = False  # 是否查询封禁
+        self.check_contest = False  # 是否查询胜场
+        self.check_prime = False  # 查询优先状态
+        self.close_guard = False
+        self.check_user_info = False
         super(Ui_MainWindow, self).__init__()
         self.setupUi(self)  # 使用 Ui_MainWindow 来设置界面
 
@@ -150,24 +249,55 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
             self.stop_task()
 
     def start_task(self):
+        self.taskQueue = Queue()
+        if self.dateCheckBox.isChecked():
+            self.selected_date = self.dateTimeEdit.dateTime().toString("yyyy-MM-dd HH:mm:ss")
+        else:
+            self.selected_date = None
+        if self.rankCheckBox.isChecked():
+            self.check_rank = True
+        if self.vacCheckBox.isChecked():
+            self.check_vac = True
+        if self.contestCheckBox.isChecked():
+            self.check_contest = True
+        if self.primeCheckBox.isChecked():
+            self.check_prime = True
+        if self.closeGuardCheckBox.isChecked():
+            self.close_guard = True
+        if self.userInfoCheckBox.isChecked():
+            self.check_user_info = True
         thread_num = int(self.threadNumEdit.text())  # 获取文本内容
         if thread_num:
             self.maxThreads = thread_num
         else:
             self.maxThreads = 1
+
         if self.accTable.rowCount() > 0:
             # 更新运行状态
             self.isRunning = 1
             self.startTaskBut.setText("停止")
             self.startTaskBut.setEnabled(True)
             self.threadList.clear()
-            rowCount = self.accTable.rowCount()
-            for rowIndex in range(rowCount):
+
+            # 检查是否有选中的行
+            selected_rows = []
+            for rowIndex in range(self.accTable.rowCount()):
+                if self.accTable.item(rowIndex, 0).checkState() == Qt.Checked:
+                    selected_rows.append(rowIndex)
+
+            # 如果有选中的行，则只处理选中的行
+            if selected_rows:
+                row_indexes_to_process = selected_rows
+            else:
+                # 否则处理所有行
+                row_indexes_to_process = range(self.accTable.rowCount())
+
+            # 将任务参数作为元组加入队列
+            for rowIndex in row_indexes_to_process:
                 account = self.accTable.item(rowIndex, 1).text()
                 password = self.accTable.item(rowIndex, 2).text()
                 email = self.accTable.item(rowIndex, 3).text()
                 email_pwd = self.accTable.item(rowIndex, 4).text()
-                # 将任务参数作为元组加入队列
                 self.taskQueue.put((account, password, email, email_pwd, rowIndex))
 
             # 尝试启动初始的一组线程
@@ -188,7 +318,9 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         if not self.taskQueue.empty() and self.activeThreads < self.maxThreads and self.isRunning == 1:
             account, password, email, email_pwd, rowIndex = self.taskQueue.get()
             thread = QThread()
-            worker = Worker(account, password, email, email_pwd, rowIndex)
+            worker = Worker(account, password, email, email_pwd, rowIndex, date=self.selected_date,
+                            check_rank=self.check_rank, check_vac=self.check_vac, check_contest=self.check_contest,
+                            check_prime=self.check_prime, close_guard=self.close_guard, check_user_info=self.check_user_info)
             worker.moveToThread(thread)
             worker.update_table_item_request.connect(self.update_table_item)
             worker.get_table_item.connect(self.get_table_item)
@@ -238,9 +370,24 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         invertSelectionAction = menu.addAction("反选")
         invertSelectionAction.triggered.connect(self.invertSelection)
 
+        # 导出选中账号
+        deleteSelectedAction = menu.addAction("选中登陆成功账号")
+        deleteSelectedAction.triggered.connect(self.select_login_success)
+
         # 选中掉落数量大于0的账户
         invertSelectionAction = menu.addAction("选中掉落数量大于0的账户")
         invertSelectionAction.triggered.connect(self.select_num_gt_0)
+
+        # 导出选中账号
+        deleteSelectedAction = menu.addAction("选中封禁账号")
+        deleteSelectedAction.triggered.connect(self.select_vac_acc)
+
+        deleteSelectedAction = menu.addAction("选中关闭令牌成功")
+        deleteSelectedAction.triggered.connect(self.select_close_guard_success)
+
+        # 选中账号密码错误
+        deleteSelectedAction = menu.addAction("选中账号密码错误")
+        deleteSelectedAction.triggered.connect(self.select_pwd_error)
 
         # 添加删除选中行动作
         deleteSelectedAction = menu.addAction("删除选中行")
@@ -261,6 +408,38 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         for i in range(self.accTable.rowCount()):
             num = self.get_table_item(i, 7)
             if num and int(num) > 0:
+                self.accTable.item(i, 0).setCheckState(Qt.Checked)
+            else:
+                self.accTable.item(i, 0).setCheckState(Qt.Unchecked)
+
+    def select_vac_acc(self):
+        for i in range(self.accTable.rowCount()):
+            vac_state = self.get_table_item(i, 12)
+            if vac_state == '封禁':
+                self.accTable.item(i, 0).setCheckState(Qt.Checked)
+            else:
+                self.accTable.item(i, 0).setCheckState(Qt.Unchecked)
+
+    def select_login_success(self):
+        for i in range(self.accTable.rowCount()):
+            login_state = self.get_table_item(i, 5)
+            if login_state == '登录成功':
+                self.accTable.item(i, 0).setCheckState(Qt.Checked)
+            else:
+                self.accTable.item(i, 0).setCheckState(Qt.Unchecked)
+
+    def select_close_guard_success(self):
+        for i in range(self.accTable.rowCount()):
+            login_state = self.get_table_item(i, 5)
+            if login_state == '关闭令牌成功':
+                self.accTable.item(i, 0).setCheckState(Qt.Checked)
+            else:
+                self.accTable.item(i, 0).setCheckState(Qt.Unchecked)
+
+    def select_pwd_error(self):
+        for i in range(self.accTable.rowCount()):
+            login_state = self.get_table_item(i, 5)
+            if login_state == '账号密码错误':
                 self.accTable.item(i, 0).setCheckState(Qt.Checked)
             else:
                 self.accTable.item(i, 0).setCheckState(Qt.Unchecked)

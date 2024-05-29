@@ -1,4 +1,4 @@
-import os.path
+import os
 import sys
 
 from time import time
@@ -43,23 +43,24 @@ def generate_twofactor_code_for_time(shared_secret, aligned_time):
 
 # 模拟生成验证码
 def generator_code(steam_id, user_name):
-    steam_id_path = fr'.\maFiles\{steam_id}.maFile'
-    user_name_path = fr'.\maFiles\{user_name}.maFile'
+    shared_secret = None
     # 从文件中读入shared_secrets
-    if steam_id and os.path.exists(steam_id_path):
-        with open(steam_id_path) as fn:
-            js = fn.read()
-            dic = json.loads(js)
-            shared_secret = dic.get('shared_secret')
-    elif os.path.exists(user_name_path):
-        with open(user_name_path) as fn:
-            js = fn.read()
-            dic = json.loads(js)
-            shared_secret = dic.get('shared_secret')
-    if shared_secret:
-        aligned_time = int(time() + get_time_offset())  # 补偿后的时间
-        two_factor_code = generate_twofactor_code_for_time(shared_secret, aligned_time)
-        if len(two_factor_code) == 5:
-            return True, two_factor_code
-        else:
-            return False
+    if steam_id:
+        if os.path.exists(f'./maFiles/{steam_id}.maFile'):
+            with open(fr'./maFiles/{steam_id}.maFile') as fn:
+                js = fn.read()
+                dic = json.loads(js)
+                shared_secret = dic.get('shared_secret')
+    if shared_secret is None:
+        if os.path.exists(f'./maFiles/{user_name}.maFile'):
+            with open(fr'./maFiles/{user_name}.maFile') as fn:
+                js = fn.read()
+                dic = json.loads(js)
+                shared_secret = dic.get('shared_secret')
+
+    aligned_time = int(time() + get_time_offset())  # 补偿后的时间
+    two_factor_code = generate_twofactor_code_for_time(shared_secret, aligned_time)
+    if len(two_factor_code) == 5:
+        return True, two_factor_code
+    else:
+        return False
