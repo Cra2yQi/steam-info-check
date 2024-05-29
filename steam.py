@@ -31,7 +31,8 @@ class SteamAuth:
         self.password = password
         self.email = email
         self.email_pwd = email_pwd
-        self.ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+        self.ua = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 '
+                   'Safari/537.36')
         self.session_id = self.get_session_id()
         self.browser_id = self.get_browser_id()
         self.session = requests.session()
@@ -45,7 +46,7 @@ class SteamAuth:
         self.access_token = None
         self.refresh_token = None
         self.ak_bmsc_value = None
-        self.get_akbmsc()
+        # self.get_akbmsc()
 
     def get_session_id(self):
         bytes_length = 12
@@ -300,6 +301,7 @@ class SteamAuth:
         return False
 
     def close_guard(self, pop_server):
+        self.get_akbmsc()
         url = 'https://store.steampowered.com/twofactor/manage_action'
         data = {
             'sessionid': self.session_id,
@@ -584,15 +586,4 @@ class SteamAuth:
                     return False, str(e)
 
 
-if __name__ == '__main__':
-    url = 'https://login.steampowered.com/jwt/ajaxrefresh'
-    header = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        'accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.8'
-    }
-    response = requests.get(url, headers=header)
-    # 使用正则表达式提取ak_bmsc的值
-    match = re.search(r'ak_bmsc=([^;]+)', response.headers["Set-Cookie"])
-    if match:
-        ak_bmsc_value = match.group(1)
+
