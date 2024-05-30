@@ -13,6 +13,7 @@ from datetime import datetime
 
 def fetch_latest_email_token(email, password, pop_server):
     pop_server = pop_server.split(":")
+    print(pop_server)
     # 尝试连接到POP3服务器
     try:
         if pop_server[1] == '110':
@@ -28,6 +29,7 @@ def fetch_latest_email_token(email, password, pop_server):
     try:
         # 检索邮件数量
         mail_count, _ = server.stat()
+        print(mail_count)
         if mail_count == 0:
             logging.info("邮箱中没有邮件。")
             return None
@@ -35,9 +37,16 @@ def fetch_latest_email_token(email, password, pop_server):
             # 获取并解析最新一封邮件
             _, lines, _ = server.retr(i)  # 获取最后一封邮件
             msg_content = b"\r\n".join(lines)  # 解码邮件内容
+            print(msg_content)
             # 使用正则表达式查找特定格式的字符串（例如，5位数字或字母）
             match = re.findall(
                 r"\\r\\n=09=09=09=09=09=09=09=09=09=09=09=09([\w]{5})=09=09=09=09=09=09=09=09=09=09=09<=\\r\\n",
+                str(msg_content))
+            if len(match):
+                token = match[0]
+                return token
+            match = re.findall(
+                r"\\r\\n\\t\\t\\t\\t\\t\\t\\t\\t\\t\\t\\t\\t([\w]{5})\\t\\t\\t\\t\\t\\t\\t\\t\\t\\t\\t",
                 str(msg_content))
             if len(match):
                 token = match[0]
@@ -47,8 +56,8 @@ def fetch_latest_email_token(email, password, pop_server):
         logging.error(f"处理邮件时发生错误：{e}")
         return None
     finally:
-        for i in range(mail_count, 0, -1):
-            server.dele(i)
+        # for i in range(mail_count, 0, -1):
+        #     server.dele(i)
         server.quit()  # 确保断开连接
 
 
@@ -159,7 +168,8 @@ def email_code(email, password, pop_server):
             msg = Parser().parsestr('\r\n'.join([line.decode() for line in lines]))
             # 邮件内容:
             mail_object = parse_email(msg)
-            # print(mail_object)
+            print(type(mail_object))
+            print(mail_object)
             if "noreply@steampowered.com" in mail_object.get("From", ""):
                 # 优先处理找回账户的链接
                 login_code = re.findall('href="(https://help.steampowered.com/[^"]+/wizard/HelpWithLogin)"',
@@ -167,8 +177,13 @@ def email_code(email, password, pop_server):
                 if login_code:
                     logging.info("邮箱:{}已经注册了steam了".format(email))
                     return login_code[0]
-                code = re.findall(r'href="(https://store.steampowered.com/account/steamguarddisableverification\?'
-                                  r'stoken=[^"]+)"', mail_object.get('message', ''))
+                # 提取URL的正则表达式
+                url_pattern = re.compile(
+                    r'https://store\.steampowered\.com/account/steamguarddisableverification\?stoken=[^&]+&steamid=\d+')
+
+                # 查找所有匹配的URL
+                code = url_pattern.findall(mail_object['message'])
+
                 if code:
                     return code[0]
             else:
