@@ -11,21 +11,25 @@ from datetime import datetime
 从邮箱中正则验证码，并清空邮箱
 '''
 
-
 def fetch_latest_email_token(email, password, pop_server):
+    pop_server = pop_server.split(":")
+    print(pop_server)
     # 尝试连接到POP3服务器
     try:
-        server = poplib.POP3_SSL(pop_server, 995)  # 使用标准POP3端口
+        if pop_server[1] == '110':
+            server = poplib.POP3(pop_server[0], int(pop_server[1]))
+        else:
+            # 测试微软需要SSL
+            server = poplib.POP3_SSL(pop_server[0], 995)
         server.user(email)
         server.pass_(password)
     except poplib.error_proto as e:
         logging.error("登录邮件服务器失败：{}".format(e))
         return None
-
     try:
         # 检索邮件数量
         mail_count, _ = server.stat()
-
+        print(mail_count, _)
         if mail_count == 0:
             logging.info("邮箱中没有邮件。")
             return None
@@ -39,6 +43,7 @@ def fetch_latest_email_token(email, password, pop_server):
                 str(msg_content))
             if len(match):
                 token = match[0]
+                print(token)
                 return token
         return None
     except Exception as e:
@@ -63,6 +68,7 @@ def get_login_code(email, password, pop_server):
 
 
 def email_code(email, password, pop_server):
+    pop_server = pop_server.split(":")
     def guess_charset(msg):
         charset = msg.get_charset()
         if charset is None:
@@ -125,18 +131,19 @@ def email_code(email, password, pop_server):
         return mail_object
 
     try:
-        # 测试微软需要SSL
-        server = poplib.POP3_SSL(pop_server, 995)
+        if pop_server[1] == '110':
+            # 测试微软需要SSL
+            server = poplib.POP3(pop_server[0], 110)
+        else:
+            server = poplib.POP3_SSL(pop_server[0], 995)
     except:
         logging.error("邮箱服务器链接失败")
-        print("邮箱服务器链接失败")
         return None
     try:
         server.user(email)
         server.pass_(password)
     except:
         logging.info("email:{}邮箱账户或者密码错误".format(email))
-        print("邮箱服务器链接失败111")
         return None
     mail_messages, mail_size = server.stat()
     resp, mails, octets = server.list()
@@ -174,7 +181,6 @@ def email_code(email, password, pop_server):
 
 
 def get_close_guard_link(email, password, pop_server):
-
     for i in range(3):
         time.sleep(3)
         result = email_code(email, password, pop_server)
@@ -184,5 +190,3 @@ def get_close_guard_link(email, password, pop_server):
             logging.error("获取关闭令牌链接失败{}, {}, {}".format(i, email, password))
 
             continue
-
-

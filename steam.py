@@ -302,6 +302,7 @@ class SteamAuth:
 
     def close_guard(self, pop_server):
         self.get_akbmsc()
+        print(self.ak_bmsc_value)
         url = 'https://store.steampowered.com/twofactor/manage_action'
         data = {
             'sessionid': self.session_id,
@@ -322,13 +323,11 @@ class SteamAuth:
             'user-agent': self.ua,
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         }
-
         response = self.session.post(url, data=data, cookies=cookies, headers=headers)
-
         if regex_close_guard(response.content):
-
+            print(response.content)
             link = get_close_guard_link(self.email, self.email_pwd, pop_server)
-
+            print(link)
             if link:
                 response = self.session.get(url=link, headers=headers, cookies=cookies)
                 if regex_close_guard2(response.content):

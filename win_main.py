@@ -27,7 +27,9 @@ class Worker(QThread, QObject):
     get_table_item = pyqtSignal(int, int)
 
     def __init__(self, account, password, email, email_pwd, row_index, date=None, parent=None, check_rank=False,
-                 check_vac=False, check_contest=False, check_prime=False, close_guard=False, check_user_info=False):
+                 check_vac=False, check_contest=False, check_prime=False, close_guard=False, check_user_info=False,
+                 pop_server=None):
+        self.parent = parent
         QThread.__init__(self, parent)
         QObject.__init__(self, parent)
         self.date = date
@@ -43,7 +45,7 @@ class Worker(QThread, QObject):
         self.close_guard = close_guard
         self.check_user_info = check_user_info
         self.acc = None
-        self.pop_server = None
+        self.pop_server = pop_server
 
     def run(self):
         try:
@@ -57,13 +59,7 @@ class Worker(QThread, QObject):
                     self.vac_task()
                 if self.check_contest:
                     self.contest_task()
-                if self.close_guard:
-                    login_msg = self.get_table_item.emit(self.row_index, 5)
-                    if login_msg != '无令牌登录成功':
-                        if self.acc.close_guard(pop_server=self.pop_server):
-                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌成功")
-                        else:
-                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌失败")
+
                 if self.check_user_info:
                     self.check_user_info_task()
         except Exception as e:
@@ -90,14 +86,19 @@ class Worker(QThread, QObject):
                     elif send_re.allowed_confirmations[0].confirmation_type == 2:
                         self.update_table_item_request.emit(row_index, 5, '尝试获取邮箱令牌')
                         self.acc.send_code()
-                        self.pop_server = f'mail.{send_re.allowed_confirmations[0].associated_message}'
+                        # self.pop_server = f'mail.{send_re.allowed_confirmations[0].associated_message}'
                         code = get_login_code(self.email, self.email_pwd, self.pop_server)
                         if code:
                             state = self.acc.auth_code(code, code_type=2)
                             if state:
                                 token_state = self.acc.get_token()
                                 if token_state:
-                                    self.update_table_item_request.emit(row_index, 5, '登录成功')
+                                    self.update_table_item_request.emit(row_index, 5, '邮箱登录成功')
+                                    if self.close_guard:
+                                        if self.acc.close_guard(pop_server=self.pop_server):
+                                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌成功")
+                                        else:
+                                            self.update_table_item_request.emit(self.row_index, 5, f"关闭令牌失败")
                                     return True
                                 else:
                                     self.update_table_item_request.emit(row_index, 5, '登陆失败')
@@ -113,7 +114,7 @@ class Worker(QThread, QObject):
                             if state:
                                 token_state = self.acc.get_token()
                                 if token_state:
-                                    self.update_table_item_request.emit(row_index, 5, '登录成功')
+                                    self.update_table_item_request.emit(row_index, 5, '手机登录成功')
                                     return True
                                 else:
                                     self.update_table_item_request.emit(row_index, 5, '登陆失败')
@@ -210,6 +211,7 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         self.check_prime = False  # 查询优先状态
         self.close_guard = False
         self.check_user_info = False
+        self.pop_server = None
         super(Ui_MainWindow, self).__init__()
         self.setupUi(self)  # 使用 Ui_MainWindow 来设置界面
 
@@ -271,7 +273,6 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
             self.maxThreads = thread_num
         else:
             self.maxThreads = 1
-
         if self.accTable.rowCount() > 0:
             # 更新运行状态
             self.isRunning = 1
@@ -318,9 +319,11 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         if not self.taskQueue.empty() and self.activeThreads < self.maxThreads and self.isRunning == 1:
             account, password, email, email_pwd, rowIndex = self.taskQueue.get()
             thread = QThread()
+            self.pop_server = self.pop3Edit.text()
             worker = Worker(account, password, email, email_pwd, rowIndex, date=self.selected_date,
                             check_rank=self.check_rank, check_vac=self.check_vac, check_contest=self.check_contest,
-                            check_prime=self.check_prime, close_guard=self.close_guard, check_user_info=self.check_user_info)
+                            check_prime=self.check_prime, close_guard=self.close_guard, check_user_info=self.check_user_info,
+                            pop_server=self.pop_server)
             worker.moveToThread(thread)
             worker.update_table_item_request.connect(self.update_table_item)
             worker.get_table_item.connect(self.get_table_item)
