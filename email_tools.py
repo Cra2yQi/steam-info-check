@@ -13,7 +13,6 @@ from datetime import datetime
 
 def fetch_latest_email_token(email, password, pop_server):
     pop_server = pop_server.split(":")
-    print(pop_server)
     # 尝试连接到POP3服务器
     try:
         if pop_server[1] == '110':
@@ -29,7 +28,6 @@ def fetch_latest_email_token(email, password, pop_server):
     try:
         # 检索邮件数量
         mail_count, _ = server.stat()
-        print(mail_count, _)
         if mail_count == 0:
             logging.info("邮箱中没有邮件。")
             return None
@@ -43,7 +41,6 @@ def fetch_latest_email_token(email, password, pop_server):
                 str(msg_content))
             if len(match):
                 token = match[0]
-                print(token)
                 return token
         return None
     except Exception as e:
