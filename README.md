@@ -1,7 +1,7 @@
 <h1 align="center">
-  Steam Check Recently Dropped
+  Steam Info Check 
   
-  Steam最近掉落查询
+  Steam信息查询
 </h1>
 
 # 送大家最后一程 R.I.P🕯
